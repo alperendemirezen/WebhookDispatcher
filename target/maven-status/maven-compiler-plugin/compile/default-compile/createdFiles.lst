@@ -1,0 +1,4 @@
+hook\KafkaConsumerTask.class
+hook\KafkaServlet.class
+hook\ConfigLoader.class
+hook\Main.class
