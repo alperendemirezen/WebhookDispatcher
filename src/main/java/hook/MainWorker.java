@@ -5,12 +5,16 @@ import org.apache.kafka.common.TopicPartition;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MainWorker implements Runnable {
 
     private KafkaConsumer<String, String> consumer;
-
     private List<Subscriber> subscribers = new ArrayList<>();
+    private volatile boolean paused = false;
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition pauseCondition = lock.newCondition();
 
 
     @Override
@@ -32,6 +36,16 @@ public class MainWorker implements Runnable {
 
             while (true) {
 
+                lock.lock();
+                try {
+                    while (paused) {
+                        System.out.println("Main Worker Paused!!!");
+                        pauseCondition.await();
+                    }
+                } finally {
+                    lock.unlock();
+                }
+
                 ManagerDB.getUrlList(subscribers);
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
 
@@ -44,7 +58,6 @@ public class MainWorker implements Runnable {
                     forwardToWebhooks(record.value(), record.offset());
                 }
                 consumer.commitSync();
-
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -96,4 +109,22 @@ public class MainWorker implements Runnable {
         AppConfig.setConfigMainLastOffset(offset);
         AppConfig.saveConfig();
     }
+
+
+    public void pause() {
+        paused = true;
+    }
+
+    // resume method
+    public void resume() {
+        lock.lock();
+        try {
+            paused = false;
+            pauseCondition.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
 }
