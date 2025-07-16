@@ -24,12 +24,16 @@ public class PrivateWorker implements Runnable {
     public void run() {
 
         try {
+            System.out.println("[PrivateWorker] Started on thread: " + Thread.currentThread().getName());
+            ThreadStatusManager.registerThread();
+
             consumer = new KafkaConsumer<>(KafkaProperties.getKafkaProperties());
             TopicPartition partition = new TopicPartition(KafkaProperties.topic, 0);
             consumer.assign(Collections.singletonList(partition));
             consumer.seek(partition, subscriber.getOffset() + 1);
 
             while (running) {
+
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
                 if (records.isEmpty()) continue;
 
@@ -38,6 +42,7 @@ public class PrivateWorker implements Runnable {
                 for (ConsumerRecord<String, String> record : records) {
                     System.out.println("Offset:" + record.offset() + "| New message received: " + record.value());
                     forwardToWebhooks(record.value(), record.offset());
+                    PauseController.waitIfPaused();
                 }
                 consumer.commitSync();
             }
@@ -46,6 +51,7 @@ public class PrivateWorker implements Runnable {
             e.printStackTrace();
         } finally {
             if (consumer != null) consumer.close();
+            ThreadStatusManager.unregisterThread();
         }
     }
 

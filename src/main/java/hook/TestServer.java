@@ -16,7 +16,7 @@ public class TestServer {
         server.createContext("/", new WebhookHandler());
         server.setExecutor(null);
         server.start();
-        System.out.println("✅ Test Webhook Server started at http://localhost:9095/");
+        System.out.println("Test Webhook Server started at http://localhost:9095/");
     }
 
     static class WebhookHandler implements HttpHandler {

@@ -18,12 +18,18 @@ public class KafkaServlet extends HttpServlet {
             mainThread.setDaemon(true);
             mainThread.start();
 
-            Runnable retryTask = new RetryWorker();
 
+
+            Runnable retryTask = new RetryWorker();
 
             Thread retryThread = new Thread(retryTask);
             retryThread.setDaemon(true);
             retryThread.start();
+
+            if(AppConfig.getRetryMode().equals("unlimited")){
+                HourlyCoordinatorScheduler.startScheduler();
+            }
+
 
         } catch (Exception e) {
             throw new ServletException("Failed to start Kafka Consumer", e);

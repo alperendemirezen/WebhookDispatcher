@@ -12,14 +12,15 @@ public class MainWorker implements Runnable {
 
     private KafkaConsumer<String, String> consumer;
     private List<Subscriber> subscribers = new ArrayList<>();
-    private volatile boolean paused = false;
-    private final ReentrantLock lock = new ReentrantLock();
-    private final Condition pauseCondition = lock.newCondition();
 
 
     @Override
     public void run() {
         try {
+            System.out.println("Mode: " +  AppConfig.getRetryMode());
+            System.out.println("[MainWorker] Started on thread: " + Thread.currentThread().getName());
+            ThreadStatusManager.registerThread();
+
             consumer = new KafkaConsumer<>(KafkaProperties.getKafkaProperties());
             TopicPartition partition = new TopicPartition(KafkaProperties.topic, 0);
             consumer.assign(Collections.singletonList(partition));
@@ -36,16 +37,6 @@ public class MainWorker implements Runnable {
 
             while (true) {
 
-                lock.lock();
-                try {
-                    while (paused) {
-                        System.out.println("Main Worker Paused!!!");
-                        pauseCondition.await();
-                    }
-                } finally {
-                    lock.unlock();
-                }
-
                 ManagerDB.getUrlList(subscribers);
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
 
@@ -56,6 +47,7 @@ public class MainWorker implements Runnable {
                 for (ConsumerRecord<String, String> record : records) {
                     System.out.println("Offset:" + record.offset() + "| New message received: " + record.value());
                     forwardToWebhooks(record.value(), record.offset());
+                    PauseController.waitIfPaused();
                 }
                 consumer.commitSync();
             }
@@ -63,6 +55,7 @@ public class MainWorker implements Runnable {
             e.printStackTrace();
         } finally {
             if (consumer != null) consumer.close();
+            ThreadStatusManager.unregisterThread();
         }
     }
 
@@ -100,6 +93,7 @@ public class MainWorker implements Runnable {
 
                     if(AppConfig.getRetryMode().equals("unlimited")){
                         ManagerDB.deleteFromSubscribers(subscriber.getUrl());
+                        ManagerDB.getUrlList(subscribers);
                     }
                 }
             }
@@ -109,22 +103,4 @@ public class MainWorker implements Runnable {
         AppConfig.setConfigMainLastOffset(offset);
         AppConfig.saveConfig();
     }
-
-
-    public void pause() {
-        paused = true;
-    }
-
-    // resume method
-    public void resume() {
-        lock.lock();
-        try {
-            paused = false;
-            pauseCondition.signal();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-
 }
