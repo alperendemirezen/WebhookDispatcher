@@ -1,8 +1,12 @@
 package hook;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class RetryWorker implements Runnable {
+
+    public static List<PrivateWorker> privateWorkers = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     public void run() {
@@ -17,8 +21,9 @@ public class RetryWorker implements Runnable {
             while (true) {
                 try {
 
-                    System.out.println("[RetryWorker] Checking failed messages...");
+                    //System.out.println("[RetryWorker] Checking failed messages...");
                     List<FailedMessage> failedList = ManagerDB.getAllFailedMessages();
+
 
                     for (FailedMessage msg : failedList) {
 
@@ -29,6 +34,8 @@ public class RetryWorker implements Runnable {
 
                                 Subscriber subscriber = new Subscriber(msg.getUrl(), msg.getOffset());
                                 ManagerDB.insertPrivateSubscriber(subscriber);
+                                System.out.println("Inserted to private subscriber with url: " + subscriber.getUrl()+ " and offset: " + subscriber.getOffset());
+
 
                                 Thread thread = new Thread(new PrivateWorker(subscriber));
                                 thread.start();
@@ -48,11 +55,9 @@ public class RetryWorker implements Runnable {
                             }
 
                         }
-
-                        PauseController.waitIfPaused();
                     }
 
-
+                    PauseController.waitIfPaused();
                     //Thread.sleep(AppConfig.getRetryPeriodMs());
 
                 } catch (Exception e) {

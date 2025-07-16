@@ -145,7 +145,7 @@ public class ManagerDB {
             Class.forName("org.sqlite.JDBC");
             try (Connection conn = DriverManager.getConnection(DB_PATH);
                  PreparedStatement stmt = conn.prepareStatement(
-                         "INSERT OR IGNORE INTO private_subscribers (url, last_offset) VALUES (?, ?)")) {
+                         "INSERT INTO private_subscribers (url, last_offset) VALUES (?, ?)")) {
 
                 stmt.setString(1, subscriber.getUrl());
                 stmt.setLong(2, subscriber.getOffset());
@@ -175,4 +175,66 @@ public class ManagerDB {
         }
     }
     // PRIVATE WORKER PART FINISHED
+
+
+    // MERGE WORKER PART START
+    public static void insertToSubscribers(Subscriber subscriber){
+        try {
+            Class.forName("org.sqlite.JDBC");
+            try (Connection conn = DriverManager.getConnection(DB_PATH);
+                 PreparedStatement stmt = conn.prepareStatement(
+                         "INSERT INTO subscribers (url, last_offset) VALUES (?, ?)")) {
+
+                stmt.setString(1, subscriber.getUrl());
+                stmt.setLong(2, subscriber.getOffset());
+                stmt.executeUpdate();
+
+                System.out.println("Subscriber added: " + subscriber.getUrl() + " | offset=" + subscriber.getOffset());
+                System.out.println("Subscriber added: " + subscriber.getUrl() + " | offset=" + subscriber.getOffset());
+
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to insert subscriber: " + e.getMessage());
+        }
+    }
+
+    public static void deleteFromPrivate(Subscriber subscriber) {
+        try {
+            Class.forName("org.sqlite.JDBC");
+            try (Connection conn = DriverManager.getConnection(DB_PATH);
+                 PreparedStatement stmt = conn.prepareStatement("DELETE FROM private_subscribers WHERE url = ?")) {
+
+                stmt.setString(1, subscriber.getUrl());
+                stmt.executeUpdate();
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static ArrayList<Subscriber> getPrivateWorkersFromDB() {
+        ArrayList<Subscriber> privateSubscribers = new ArrayList<>();
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            try (Connection conn = DriverManager.getConnection(DB_PATH);
+                 PreparedStatement stmt = conn.prepareStatement("SELECT url, last_offset FROM private_subscribers");
+                 ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    privateSubscribers.add(new Subscriber(rs.getString("url"), rs.getLong("last_offset")));
+                }
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return privateSubscribers;
+    }
+    // MERGE WORKER PART FINISHED
+
+
+
 }

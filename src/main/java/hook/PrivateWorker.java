@@ -13,8 +13,12 @@ import java.util.Collections;
 public class PrivateWorker implements Runnable {
 
     private Subscriber subscriber;
+
     private KafkaConsumer<String, String> consumer;
+
     private volatile boolean running = true;
+
+
 
     public PrivateWorker(Subscriber subscriber) {
         this.subscriber = subscriber;
@@ -22,6 +26,7 @@ public class PrivateWorker implements Runnable {
 
     @Override
     public void run() {
+        RetryWorker.privateWorkers.add(this);
 
         try {
             System.out.println("[PrivateWorker] Started on thread: " + Thread.currentThread().getName());
@@ -35,14 +40,19 @@ public class PrivateWorker implements Runnable {
             while (running) {
 
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
-                if (records.isEmpty()) continue;
 
+                if (records.isEmpty()){
+                    if (records.isEmpty()) System.out.println("Records is empty");
+                    PauseController.waitIfPaused();
+                    continue;
+                }
                 System.out.println("POLLED PRIVATE" + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println("Offset:" + record.offset() + "| New message received: " + record.value());
+                    System.out.println("PRIVATE: Offset:" + record.offset() + "| New message received: " + record.value());
                     forwardToWebhooks(record.value(), record.offset());
                     PauseController.waitIfPaused();
+                    if(running==false) break;
                 }
                 consumer.commitSync();
             }
@@ -64,6 +74,7 @@ public class PrivateWorker implements Runnable {
             if (statusCode == 200) {
                 System.out.println("SUCCESS PRIVATE : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                 ManagerDB.privateUpdateOffset(subscriber.getUrl(), offset);
+                subscriber.setOffset(offset);
             } else {
                 System.out.println("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                 ManagerDB.insertToFailedMessages(subscriber.getUrl(), message, offset);
@@ -74,4 +85,19 @@ public class PrivateWorker implements Runnable {
             e.printStackTrace();
         }
     }
+
+
+    public Subscriber getSubscriber() {
+        return subscriber;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void stop() {
+        running = false;
+    }
+
+
 }

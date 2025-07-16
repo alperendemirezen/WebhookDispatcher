@@ -12,11 +12,13 @@ public class MainWorker implements Runnable {
 
     private KafkaConsumer<String, String> consumer;
     private List<Subscriber> subscribers = new ArrayList<>();
+    private String mode;
 
 
     @Override
     public void run() {
         try {
+            mode = AppConfig.getRetryMode();
             System.out.println("Mode: " +  AppConfig.getRetryMode());
             System.out.println("[MainWorker] Started on thread: " + Thread.currentThread().getName());
             ThreadStatusManager.registerThread();
@@ -40,14 +42,21 @@ public class MainWorker implements Runnable {
                 ManagerDB.getUrlList(subscribers);
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
 
-                if (records.isEmpty()) continue;
+                if (records.isEmpty()){
+                    if (records.isEmpty()) System.out.println("Records is empty");
+                    PauseController.waitIfPaused();
+                    continue;
+                }
 
                 System.out.println("POLLED: " + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println("Offset:" + record.offset() + "| New message received: " + record.value());
+                    //System.out.println("MAIN : Offset:" + record.offset() + "| New message received: " + record.value());
                     forwardToWebhooks(record.value(), record.offset());
                     PauseController.waitIfPaused();
+                    if(mode.equals("unlimited")){
+                        ManagerDB.getUrlList(subscribers);
+                    }
                 }
                 consumer.commitSync();
             }
@@ -84,16 +93,16 @@ public class MainWorker implements Runnable {
                 }
 
                 if (sent) {
-                    System.out.println("SUCCESS : " + subscriber.getUrl() + " (status: " + statusCode + ")");
+                    //System.out.println("SUCCESS : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                     ManagerDB.updateOffset(subscriber.getUrl(), offset);
 
                 } else {
                     System.err.println("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                     ManagerDB.insertToFailedMessages(subscriber.getUrl(),message,offset);
+                    System.out.println("Inserted to failed message with url: " + subscriber.getUrl()+ " and offset: " + subscriber.getOffset());
 
-                    if(AppConfig.getRetryMode().equals("unlimited")){
+                    if(mode.equals("unlimited")){
                         ManagerDB.deleteFromSubscribers(subscriber.getUrl());
-                        ManagerDB.getUrlList(subscribers);
                     }
                 }
             }

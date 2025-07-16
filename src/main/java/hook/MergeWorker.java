@@ -1,10 +1,15 @@
 package hook;
 
+
+import java.util.Iterator;
+
 public class MergeWorker implements Runnable {
+
 
     @Override
     public void run() {
-        System.out.println("🕐 Coordinator triggered at hour start");
+        System.out.println(" Merge Worker triggered at hour start");
+
 
         PauseController.pause();
 
@@ -20,22 +25,35 @@ public class MergeWorker implements Runnable {
 
 
         System.out.println("All threads paused. Performing merge action...");
-        performCriticalAction();
+        mergePrivatesAndMain();
 
 
         PauseController.resume();
         System.out.println("Threads resumed.");
     }
 
-    private void performCriticalAction() {
-        System.out.println("MERGE ACTION IS DONE");
-        System.out.println("MERGE ACTION IS DONE");
-        System.out.println("MERGE ACTION IS DONE");
-        System.out.println("MERGE ACTION IS DONE");
-        System.out.println("MERGE ACTION IS DONE");
-        System.out.println("MERGE ACTION IS DONE");
-        System.out.println("MERGE ACTION IS DONE");
+    private void mergePrivatesAndMain() {
+        Iterator<PrivateWorker> iterator = RetryWorker.privateWorkers.iterator();
 
+        while (iterator.hasNext()) {
+            PrivateWorker worker = iterator.next();
 
+            if (AppConfig.getConfigMainLastOffset() <= worker.getSubscriber().getOffset()) {
+                System.out.println("[MergeWorker] Merging subscriber: " + worker.getSubscriber().getUrl() +
+                        " (private offset=" + worker.getSubscriber().getOffset() +
+                        ", main offset=" + AppConfig.getConfigMainLastOffset() + ")");
+
+                ManagerDB.insertToSubscribers(worker.getSubscriber());
+                ManagerDB.deleteFromPrivate(worker.getSubscriber());
+
+                worker.stop();
+
+                iterator.remove();
+            } else {
+                System.out.println("[MergeWorker] Skipped subscriber: " + worker.getSubscriber().getUrl() +
+                        " (private offset=" + worker.getSubscriber().getOffset() +
+                        ", main offset=" + AppConfig.getConfigMainLastOffset() + ")");
+            }
+        }
     }
 }

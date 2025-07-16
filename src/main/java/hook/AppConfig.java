@@ -120,6 +120,11 @@ public class AppConfig {
         return "limited";
     }
 
+    public static String getMainLastOffset(){
+        String mainLastOffset = config.getProperty("main.last.offset");
+        return mainLastOffset;
+    }
+
     public static Properties getConfig() {
         return config;
     }
