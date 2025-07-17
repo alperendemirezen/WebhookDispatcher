@@ -37,6 +37,10 @@ public class ManagerDB {
                 stmt.setString(2, url);
                 stmt.executeUpdate();
 
+                AppConfig.setMainLastOffset(offset);
+                AppConfig.setStartOffset(offset);
+                AppConfig.saveConfig();
+
             }
         } catch (Exception e) {
             e.printStackTrace();

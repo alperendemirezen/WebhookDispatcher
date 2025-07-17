@@ -77,7 +77,7 @@ public class PrivateWorker implements Runnable {
 
             int statusCode = -1;
 
-            statusCode = WebhookSender.send(subscriber.getUrl(), message);
+            statusCode = WebhookSender.send(subscriber.getUrl(), message, offset);
             if (statusCode == 200) {
                 System.out.println("SUCCESS PRIVATE : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                 ManagerDB.privateUpdateOffset(subscriber.getUrl(), offset);

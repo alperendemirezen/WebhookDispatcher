@@ -81,7 +81,7 @@ public class MainWorker implements Runnable {
 
 
                 while (!sent && attempts < attemptsLimit) {
-                    statusCode = WebhookSender.send(subscriber.getUrl(), message);
+                    statusCode = WebhookSender.send(subscriber.getUrl(), message, offset);
                     if (statusCode == 200) {
                         sent = true;
                     } else {
@@ -91,7 +91,6 @@ public class MainWorker implements Runnable {
                         }
                     }
                 }
-
 
                 if (sent) {
                     System.out.println("SUCCESS : " + subscriber.getUrl() + " (status: " + statusCode + ")");
@@ -110,8 +109,5 @@ public class MainWorker implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        AppConfig.setMainLastOffset(offset);
-        AppConfig.setStartOffset(offset);
-        AppConfig.saveConfig();
     }
 }

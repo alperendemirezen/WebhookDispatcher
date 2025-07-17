@@ -79,7 +79,7 @@ public class AppConfig {
         config.setProperty("main.last.offset",String.valueOf(offset));
     }
     public static void setStartOffset(long offset){
-        config.setProperty("main.last.offset",String.valueOf(offset));
+        config.setProperty("start.offset",String.valueOf(offset));
     }
 
 

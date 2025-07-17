@@ -9,7 +9,7 @@ import org.apache.http.impl.client.HttpClients;
 
 public class WebhookSender {
 
-    public static int send(String url, String payload) {
+    public static int send(String url, String payload, long offset) {
         int timeout;
 
         try{
@@ -30,7 +30,9 @@ public class WebhookSender {
 
             HttpPost post = new HttpPost(url);
             post.setHeader("Content-Type", "application/json");
-            post.setEntity(new StringEntity(payload));
+
+            String fullPayload = String.format("{\"offset\": %d, \"message\": %s}", offset, payload);
+            post.setEntity(new StringEntity(fullPayload));
 
             try (CloseableHttpResponse response = client.execute(post)) {
                 return response.getStatusLine().getStatusCode();

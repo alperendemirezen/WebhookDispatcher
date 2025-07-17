@@ -27,7 +27,7 @@ public class RetryWorker implements Runnable {
 
                     for (FailedMessage msg : failedList) {
 
-                        int statusCode = WebhookSender.send(msg.getUrl(), msg.getMessage());
+                        int statusCode = WebhookSender.send(msg.getUrl(), msg.getMessage(), msg.getOffset());
 
                         if (statusCode == 200) {
                             if (mode.equals("unlimited")) {

@@ -35,8 +35,6 @@ public class KafkaServlet extends HttpServlet {
                     Thread thread = new Thread(new PrivateWorker(subscriber));
                     thread.start();
                 }
-
-
             }
 
 
@@ -44,4 +42,5 @@ public class KafkaServlet extends HttpServlet {
             throw new ServletException("Failed to start Kafka Consumer", e);
         }
     }
+
 }
