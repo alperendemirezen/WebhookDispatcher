@@ -5,8 +5,6 @@ import org.apache.kafka.common.TopicPartition;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class MainWorker implements Runnable {
 
@@ -29,7 +27,7 @@ public class MainWorker implements Runnable {
             consumer.seekToBeginning(Collections.singletonList(partition));
             long beginningOffset = consumer.position(partition);
 
-            long startOffset = (AppConfig.getConfigStartOffset()!=-1) ? AppConfig.getConfigStartOffset() : AppConfig.getConfigMainLastOffset();
+            long startOffset = (AppConfig.getConfigStartOffset()!=-1) ? AppConfig.getConfigStartOffset() : AppConfig.getMainLastOffset();
             if (startOffset < beginningOffset) {
                 System.out.println("Start offset is too early. Starting from beginning offset: " + beginningOffset);
                 consumer.seek(partition, beginningOffset);
@@ -51,7 +49,7 @@ public class MainWorker implements Runnable {
                 System.out.println("POLLED: " + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
-                    //System.out.println("MAIN : Offset:" + record.offset() + "| New message received: " + record.value());
+                    System.out.println("MAIN : Offset:" + record.offset() + "| New message received: " + record.value());
                     forwardToWebhooks(record.value(), record.offset());
                     PauseController.waitIfPaused();
                     if(mode.equals("unlimited")){
@@ -79,27 +77,30 @@ public class MainWorker implements Runnable {
                 boolean sent = false;
                 int attempts = 0;
                 int statusCode = -1;
+                int attemptsLimit = (mode.equals("unlimited")) ? 3 : 1;
 
-                while (!sent && attempts < 3) {
+
+                while (!sent && attempts < attemptsLimit) {
                     statusCode = WebhookSender.send(subscriber.getUrl(), message);
                     if (statusCode == 200) {
                         sent = true;
                     } else {
                         attempts++;
-                        if (attempts < 3) {
+                        if (attempts < attemptsLimit) {
                             System.out.println("Retrying (" + attempts + "): " + subscriber.getUrl());
                         }
                     }
                 }
 
+
                 if (sent) {
-                    //System.out.println("SUCCESS : " + subscriber.getUrl() + " (status: " + statusCode + ")");
+                    System.out.println("SUCCESS : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                     ManagerDB.updateOffset(subscriber.getUrl(), offset);
 
                 } else {
                     System.err.println("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                     ManagerDB.insertToFailedMessages(subscriber.getUrl(),message,offset);
-                    System.out.println("Inserted to failed message with url: " + subscriber.getUrl()+ " and offset: " + subscriber.getOffset());
+                    System.out.println("Inserted to failed message with url: " + subscriber.getUrl()+ " and offset: " + offset);
 
                     if(mode.equals("unlimited")){
                         ManagerDB.deleteFromSubscribers(subscriber.getUrl());
@@ -109,7 +110,8 @@ public class MainWorker implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        AppConfig.setConfigMainLastOffset(offset);
+        AppConfig.setMainLastOffset(offset);
+        AppConfig.setStartOffset(offset);
         AppConfig.saveConfig();
     }
 }

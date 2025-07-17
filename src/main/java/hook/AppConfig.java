@@ -67,7 +67,7 @@ public class AppConfig {
         return  offset;
 
     }
-    public static long getConfigMainLastOffset() {
+    public static long getMainLastOffset() {
         try {
             String strOffset = config.getProperty("main.last.offset");
             return (strOffset != null && !strOffset.isEmpty()) ? Long.parseLong(strOffset) : -1;
@@ -75,9 +75,13 @@ public class AppConfig {
             return -1;
         }
     }
-    public static void setConfigMainLastOffset(long offset){
+    public static void setMainLastOffset(long offset){
         config.setProperty("main.last.offset",String.valueOf(offset));
     }
+    public static void setStartOffset(long offset){
+        config.setProperty("main.last.offset",String.valueOf(offset));
+    }
+
 
     public static int getRetryCount() {
         try {
@@ -118,11 +122,6 @@ public class AppConfig {
             }
         }
         return "limited";
-    }
-
-    public static String getMainLastOffset(){
-        String mainLastOffset = config.getProperty("main.last.offset");
-        return mainLastOffset;
     }
 
     public static Properties getConfig() {

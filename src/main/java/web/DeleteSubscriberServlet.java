@@ -1,0 +1,24 @@
+package web;
+
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet("/DeleteSubscriberServlet")
+public class DeleteSubscriberServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String idStr = request.getParameter("id");
+
+        try {
+            int id = Integer.parseInt(idStr);
+            WebManagerDB.deleteSubscriberById(id);
+
+            response.setStatus(HttpServletResponse.SC_OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error deleting subscriber.");
+        }
+    }
+}

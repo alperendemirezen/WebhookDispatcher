@@ -38,10 +38,10 @@ public class MergeWorker implements Runnable {
         while (iterator.hasNext()) {
             PrivateWorker worker = iterator.next();
 
-            if (AppConfig.getConfigMainLastOffset() <= worker.getSubscriber().getOffset()) {
+            if (AppConfig.getMainLastOffset() <= worker.getSubscriber().getOffset()) {
                 System.out.println("[MergeWorker] Merging subscriber: " + worker.getSubscriber().getUrl() +
                         " (private offset=" + worker.getSubscriber().getOffset() +
-                        ", main offset=" + AppConfig.getConfigMainLastOffset() + ")");
+                        ", main offset=" + AppConfig.getMainLastOffset() + ")");
 
                 ManagerDB.insertToSubscribers(worker.getSubscriber());
                 ManagerDB.deleteFromPrivate(worker.getSubscriber());
@@ -52,7 +52,7 @@ public class MergeWorker implements Runnable {
             } else {
                 System.out.println("[MergeWorker] Skipped subscriber: " + worker.getSubscriber().getUrl() +
                         " (private offset=" + worker.getSubscriber().getOffset() +
-                        ", main offset=" + AppConfig.getConfigMainLastOffset() + ")");
+                        ", main offset=" + AppConfig.getMainLastOffset() + ")");
             }
         }
     }

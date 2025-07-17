@@ -1,6 +1,5 @@
 package hook;
 
-
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -19,7 +18,6 @@ public class PrivateWorker implements Runnable {
     private volatile boolean running = true;
 
 
-
     public PrivateWorker(Subscriber subscriber) {
         this.subscriber = subscriber;
     }
@@ -35,13 +33,22 @@ public class PrivateWorker implements Runnable {
             consumer = new KafkaConsumer<>(KafkaProperties.getKafkaProperties());
             TopicPartition partition = new TopicPartition(KafkaProperties.topic, 0);
             consumer.assign(Collections.singletonList(partition));
-            consumer.seek(partition, subscriber.getOffset() + 1);
+
+            consumer.seekToBeginning(Collections.singletonList(partition));
+            long beginningOffset = consumer.position(partition);
+
+            if (subscriber.getOffset() + 1 >= beginningOffset) {
+                consumer.seek(partition, subscriber.getOffset() + 1);
+            } else {
+                consumer.seek(partition, beginningOffset);
+            }
+
 
             while (running) {
 
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
 
-                if (records.isEmpty()){
+                if (records.isEmpty()) {
                     if (records.isEmpty()) System.out.println("Records is empty");
                     PauseController.waitIfPaused();
                     continue;
@@ -52,7 +59,7 @@ public class PrivateWorker implements Runnable {
                     System.out.println("PRIVATE: Offset:" + record.offset() + "| New message received: " + record.value());
                     forwardToWebhooks(record.value(), record.offset());
                     PauseController.waitIfPaused();
-                    if(running==false) break;
+                    if (running == false) break;
                 }
                 consumer.commitSync();
             }
@@ -89,10 +96,6 @@ public class PrivateWorker implements Runnable {
 
     public Subscriber getSubscriber() {
         return subscriber;
-    }
-
-    public boolean isRunning() {
-        return running;
     }
 
     public void stop() {

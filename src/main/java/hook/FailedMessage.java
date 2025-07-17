@@ -39,10 +39,6 @@ public class FailedMessage {
         return message;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
     public long getOffset() {
         return offset;
     }
@@ -53,17 +49,5 @@ public class FailedMessage {
 
     public int getRetryCount() {
         return retryCount;
-    }
-
-    public void setRetryCount(int retryCount) {
-        this.retryCount = retryCount;
-    }
-
-    public String getLastAttempt() {
-        return lastAttempt;
-    }
-
-    public void setLastAttempt(String lastAttempt) {
-        this.lastAttempt = lastAttempt;
     }
 }

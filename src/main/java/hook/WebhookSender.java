@@ -13,7 +13,7 @@ public class WebhookSender {
         int timeout;
 
         try{
-            String configTimeout = AppConfig.getConfig().getProperty("timeoutMS");
+            String configTimeout = String.valueOf(AppConfig.getTimeoutMs());
             timeout = (configTimeout != null && !configTimeout.isEmpty()) ? Integer.parseInt(configTimeout) : 1000;
         }catch (NumberFormatException e){
             timeout = 1000;
