@@ -49,11 +49,13 @@ public class MainWorker implements Runnable {
                 System.out.println("POLLED: " + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println("MAIN : Offset:" + record.offset() + "| New message received: " + record.value());
-                    forwardToWebhooks(record.value(), record.offset());
-                    PauseController.waitIfPaused();
-                    if(mode.equals("unlimited")){
-                        ManagerDB.getUrlList(subscribers);
+                    if(!Thread.currentThread().isInterrupted()) {
+                        System.out.println("MAIN : Offset:" + record.offset() + "| New message received: " + record.value());
+                        forwardToWebhooks(record.value(), record.offset());
+                        PauseController.waitIfPaused();
+                        if (mode.equals("unlimited")) {
+                            ManagerDB.getUrlList(subscribers);
+                        }
                     }
                 }
                 consumer.commitSync();
@@ -106,6 +108,11 @@ public class MainWorker implements Runnable {
                     }
                 }
             }
+
+            AppConfig.setMainLastOffset(offset);
+            AppConfig.setStartOffset(offset);
+            AppConfig.saveConfig();
+
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -36,11 +36,6 @@ public class ManagerDB {
                 stmt.setLong(1, offset);
                 stmt.setString(2, url);
                 stmt.executeUpdate();
-
-                AppConfig.setMainLastOffset(offset);
-                AppConfig.setStartOffset(offset);
-                AppConfig.saveConfig();
-
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -3,9 +3,15 @@ package hook;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class KafkaServlet extends HttpServlet {
+
+    private Thread mainThread;
+    private Thread retryThread;
+
+
 
     @Override
     public void init() throws ServletException {
@@ -15,14 +21,14 @@ public class KafkaServlet extends HttpServlet {
             AppConfig.readConfig();
 
             MainWorker task = new MainWorker();
-            Thread mainThread = new Thread(task);
+            mainThread = new Thread(task);
             mainThread.start();
 
 
 
             Runnable retryTask = new RetryWorker();
 
-            Thread retryThread = new Thread(retryTask);
+            retryThread = new Thread(retryTask);
             retryThread.start();
 
             if(AppConfig.getRetryMode().equals("unlimited")){
@@ -32,14 +38,43 @@ public class KafkaServlet extends HttpServlet {
 
                 for(Subscriber subscriber : privateSubscribers){
                     PrivateWorker pw = new PrivateWorker(subscriber);
-                    Thread thread = new Thread(new PrivateWorker(subscriber));
+                    Thread thread = new Thread(pw);
+                    RetryWorker.privateWorkersThreads.add(thread);
                     thread.start();
                 }
             }
 
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println("[ShutdownHook] JVM shutdown detected. Cleaning up...");
+                stopEverything();
+                System.out.println("[ShutdownHook] Cleanup complete.");
+            }));
 
         } catch (Exception e) {
             throw new ServletException("Failed to start Kafka Consumer", e);
+        }
+    }
+
+    @Override
+    public void destroy() {
+        System.out.println("[KafkaServlet] destroy() called. Cleaning up...");
+        stopEverything();
+        System.out.println("[KafkaServlet] Cleanup from destroy() complete.");
+        super.destroy();
+    }
+
+    private void stopEverything() {
+        try {
+
+            mainThread.interrupt();
+            retryThread.interrupt();
+
+            for (Thread t : RetryWorker.privateWorkersThreads) {
+                t.interrupt();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

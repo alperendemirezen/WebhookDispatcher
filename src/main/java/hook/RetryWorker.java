@@ -7,6 +7,7 @@ import java.util.List;
 public class RetryWorker implements Runnable {
 
     public static List<PrivateWorker> privateWorkers = Collections.synchronizedList(new ArrayList<>());
+    public static List<Thread> privateWorkersThreads = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     public void run() {
@@ -26,6 +27,7 @@ public class RetryWorker implements Runnable {
 
 
                     for (FailedMessage msg : failedList) {
+                        if(!Thread.currentThread().isInterrupted()){
 
                         int statusCode = WebhookSender.send(msg.getUrl(), msg.getMessage(), msg.getOffset());
 
@@ -34,10 +36,11 @@ public class RetryWorker implements Runnable {
 
                                 Subscriber subscriber = new Subscriber(msg.getUrl(), msg.getOffset());
                                 ManagerDB.insertPrivateSubscriber(subscriber);
-                                System.out.println("Inserted to private subscriber with url: " + subscriber.getUrl()+ " and offset: " + subscriber.getOffset());
+                                System.out.println("Inserted to private subscriber with url: " + subscriber.getUrl() + " and offset: " + subscriber.getOffset());
 
 
                                 Thread thread = new Thread(new PrivateWorker(subscriber));
+                                privateWorkersThreads.add(thread);
                                 thread.start();
 
                             }
@@ -55,6 +58,8 @@ public class RetryWorker implements Runnable {
                             }
 
                         }
+                    }
+
                     }
 
                     PauseController.waitIfPaused();

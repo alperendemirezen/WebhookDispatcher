@@ -26,6 +26,7 @@ public class PrivateWorker implements Runnable {
     public void run() {
         RetryWorker.privateWorkers.add(this);
 
+
         try {
             System.out.println("[PrivateWorker] Started on thread: " + Thread.currentThread().getName());
             ThreadStatusManager.registerThread();
@@ -56,10 +57,12 @@ public class PrivateWorker implements Runnable {
                 System.out.println("POLLED PRIVATE" + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println("PRIVATE: Offset:" + record.offset() + "| New message received: " + record.value());
-                    forwardToWebhooks(record.value(), record.offset());
-                    PauseController.waitIfPaused();
-                    if (running == false) break;
+                    if(!Thread.currentThread().isInterrupted()) {
+                        System.out.println("PRIVATE: Offset:" + record.offset() + "| New message received: " + record.value());
+                        forwardToWebhooks(record.value(), record.offset());
+                        PauseController.waitIfPaused();
+                        if (running == false) break;
+                    }
                 }
                 consumer.commitSync();
             }
