@@ -27,38 +27,38 @@ public class RetryWorker implements Runnable {
 
 
                     for (FailedMessage msg : failedList) {
-                        if(!Thread.currentThread().isInterrupted()){
+                        if (!Thread.currentThread().isInterrupted()) {
 
-                        int statusCode = WebhookSender.send(msg.getUrl(), msg.getMessage(), msg.getOffset());
+                            int statusCode = WebhookSender.send(msg.getUrl(), msg.getMessage(), msg.getOffset());
 
-                        if (statusCode == 200) {
-                            if (mode.equals("unlimited")) {
+                            if (statusCode == 200) {
+                                if (mode.equals("unlimited")) {
 
-                                Subscriber subscriber = new Subscriber(msg.getUrl(), msg.getOffset());
-                                ManagerDB.insertPrivateSubscriber(subscriber);
-                                System.out.println("Inserted to private subscriber with url: " + subscriber.getUrl() + " and offset: " + subscriber.getOffset());
-
-
-                                Thread thread = new Thread(new PrivateWorker(subscriber));
-                                privateWorkersThreads.add(thread);
-                                thread.start();
-
-                            }
-
-                            ManagerDB.deleteFromFailedMessages(msg.getId(), msg.getUrl(), mode);
-                            System.out.println("Retried and deleted successful: offset=" + msg.getOffset() + " url=" + msg.getUrl());
-
-                        } else {
-                            ManagerDB.incrementRetryCount(msg.getId());
-                            System.out.println("Retry failed, retry count increased: " + msg.getUrl());
+                                    Subscriber subscriber = new Subscriber(msg.getUrl(), msg.getOffset());
+                                    ManagerDB.insertPrivateSubscriber(subscriber);
+                                    System.out.println("Inserted to private subscriber with url: " + subscriber.getUrl() + " and offset: " + subscriber.getOffset());
 
 
-                            if (mode.equals("limited") && msg.getRetryCount() >= retryLimit) {
+                                    Thread thread = new Thread(new PrivateWorker(subscriber));
+                                    privateWorkersThreads.add(thread);
+                                    thread.start();
+
+                                }
+
                                 ManagerDB.deleteFromFailedMessages(msg.getId(), msg.getUrl(), mode);
-                            }
+                                System.out.println("Retried and deleted successful: offset=" + msg.getOffset() + " url=" + msg.getUrl());
 
+                            } else {
+                                ManagerDB.incrementRetryCount(msg.getId());
+                                System.out.println("Retry failed, retry count increased: " + msg.getUrl());
+
+
+                                if (mode.equals("limited") && msg.getRetryCount() >= retryLimit) {
+                                    ManagerDB.deleteFromFailedMessages(msg.getId(), msg.getUrl(), mode);
+                                }
+
+                            }
                         }
-                    }
 
                     }
 
@@ -69,9 +69,9 @@ public class RetryWorker implements Runnable {
                     e.printStackTrace();
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             ThreadStatusManager.unregisterThread();
         }
     }

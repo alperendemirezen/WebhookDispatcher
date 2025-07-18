@@ -3,14 +3,12 @@ package hook;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class KafkaServlet extends HttpServlet {
 
     private Thread mainThread;
     private Thread retryThread;
-
 
 
     @Override
@@ -24,19 +22,16 @@ public class KafkaServlet extends HttpServlet {
             mainThread = new Thread(task);
             mainThread.start();
 
-
-
             Runnable retryTask = new RetryWorker();
-
             retryThread = new Thread(retryTask);
             retryThread.start();
 
-            if(AppConfig.getRetryMode().equals("unlimited")){
+            if (AppConfig.getRetryMode().equals("unlimited")) {
                 HourlyScheduler.startScheduler();
 
                 ArrayList<Subscriber> privateSubscribers = ManagerDB.getPrivateWorkersFromDB();
 
-                for(Subscriber subscriber : privateSubscribers){
+                for (Subscriber subscriber : privateSubscribers) {
                     PrivateWorker pw = new PrivateWorker(subscriber);
                     Thread thread = new Thread(pw);
                     RetryWorker.privateWorkersThreads.add(thread);
@@ -65,7 +60,6 @@ public class KafkaServlet extends HttpServlet {
 
     private void stopEverything() {
         try {
-
             mainThread.interrupt();
             retryThread.interrupt();
 

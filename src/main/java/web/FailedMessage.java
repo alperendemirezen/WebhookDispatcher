@@ -10,7 +10,8 @@ public class FailedMessage {
 
 
     // Constructors
-    public FailedMessage() {}
+    public FailedMessage() {
+    }
 
     public FailedMessage(int id, String url, long offset, String message, int retry_count, String last_attempt) {
         this.id = id;
@@ -26,6 +27,7 @@ public class FailedMessage {
     public int getId() {
         return id;
     }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -33,6 +35,7 @@ public class FailedMessage {
     public String getUrl() {
         return url;
     }
+
     public void setUrl(String url) {
         this.url = url;
     }
@@ -40,6 +43,7 @@ public class FailedMessage {
     public long getOffset() {
         return offset;
     }
+
     public void setOffset(long offset) {
         this.offset = offset;
     }
@@ -47,6 +51,7 @@ public class FailedMessage {
     public String getMessage() {
         return message;
     }
+
     public void setMessage(String message) {
         this.message = message;
     }
@@ -62,6 +67,7 @@ public class FailedMessage {
     public String getLastAttempt() {
         return last_attempt;
     }
+
     public void setLastAttempt(String last_attempt) {
         this.last_attempt = last_attempt;
     }

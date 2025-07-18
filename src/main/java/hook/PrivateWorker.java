@@ -51,13 +51,22 @@ public class PrivateWorker implements Runnable {
 
                 if (records.isEmpty()) {
                     if (records.isEmpty()) System.out.println("Records is empty");
+
+                    consumer.seekToBeginning(Collections.singletonList(partition));
+                    beginningOffset = consumer.position(partition);   // BURAYI MUTLAKA SOR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                    if (subscriber.getOffset() + 1 >= beginningOffset) {
+                        consumer.seek(partition, subscriber.getOffset() + 1);
+                    } else {
+                        consumer.seek(partition, beginningOffset);
+                    }
                     PauseController.waitIfPaused();
                     continue;
                 }
                 System.out.println("POLLED PRIVATE" + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
-                    if(!Thread.currentThread().isInterrupted()) {
+                    if (!Thread.currentThread().isInterrupted()) {
                         System.out.println("PRIVATE: Offset:" + record.offset() + "| New message received: " + record.value());
                         forwardToWebhooks(record.value(), record.offset());
                         PauseController.waitIfPaused();

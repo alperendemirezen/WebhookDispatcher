@@ -11,7 +11,7 @@ public class HourlyScheduler {
 
     public static void startScheduler() {
         long initialDelay = 10000; //getDelayUntilNextHour();
-        long period =3000; // TimeUnit.HOURS.toMillis(1);
+        long period = 3000; // TimeUnit.HOURS.toMillis(1);
 
         scheduler.scheduleAtFixedRate(new MergeWorker(), initialDelay, period, TimeUnit.MILLISECONDS);
     }

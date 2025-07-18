@@ -10,7 +10,7 @@ public class KafkaProperties {
     private static final Properties config = AppConfig.getConfig();
     public static final String topic = config.getProperty("topic");
 
-    public static Properties getKafkaProperties(){
+    public static Properties getKafkaProperties() {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getProperty("bootstrap.servers"));
         props.put(ConsumerConfig.GROUP_ID_CONFIG, config.getProperty("group.id"));

@@ -3,6 +3,9 @@ package web;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 
 @WebServlet("/AddSubscriberServlet")
 public class AddSubscriberServlet extends HttpServlet {
@@ -19,7 +22,7 @@ public class AddSubscriberServlet extends HttpServlet {
             subscriber.setUrl(url);
             subscriber.setOffset(offset);
 
-            WebManagerDB.insertToSubscribers(subscriber);
+            insertToSubscribers(subscriber);
 
             response.setStatus(HttpServletResponse.SC_OK);
         } catch (NumberFormatException e) {
@@ -27,6 +30,22 @@ public class AddSubscriberServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server error while adding subscriber.");
+        }
+    }
+
+    public static void insertToSubscribers(Subscriber subscriber) {
+        try {
+            Class.forName("org.sqlite.JDBC");
+            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:C:\\Users\\Alperen Bey\\Desktop\\webhookDB\\webhok");
+                 PreparedStatement stmt = conn.prepareStatement(
+                         "INSERT INTO subscribers (url, last_offset) VALUES (?, ?)")) {
+
+                stmt.setString(1, subscriber.getUrl());
+                stmt.setLong(2, subscriber.getOffset());
+                stmt.executeUpdate();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

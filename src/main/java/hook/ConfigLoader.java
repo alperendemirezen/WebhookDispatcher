@@ -8,7 +8,7 @@ public class ConfigLoader {
 
     public static Properties load(String filePath) throws Exception {
         Properties props = new Properties();
-        try (InputStream input =  new FileInputStream(filePath)) {
+        try (InputStream input = new FileInputStream(filePath)) {
             if (input == null) {
                 throw new IllegalArgumentException("File not found: " + filePath);
             }

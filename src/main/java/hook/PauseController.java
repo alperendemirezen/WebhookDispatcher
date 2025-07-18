@@ -29,9 +29,4 @@ public class PauseController {
             }
         }
     }
-
-
-    public static boolean isPaused() {
-        return paused;
-    }
 }

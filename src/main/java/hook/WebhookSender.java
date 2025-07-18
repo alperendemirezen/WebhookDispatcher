@@ -12,10 +12,10 @@ public class WebhookSender {
     public static int send(String url, String payload, long offset) {
         int timeout;
 
-        try{
+        try {
             String configTimeout = String.valueOf(AppConfig.getTimeoutMs());
             timeout = (configTimeout != null && !configTimeout.isEmpty()) ? Integer.parseInt(configTimeout) : 1000;
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             timeout = 1000;
         }
 

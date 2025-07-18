@@ -6,7 +6,8 @@ public class Subscriber {
     private String url;
     private long last_offset;
 
-    public Subscriber() {}
+    public Subscriber() {
+    }
 
 
     public Subscriber(int id, String url, long last_offset) {
@@ -22,6 +23,7 @@ public class Subscriber {
     public void setId(int id) {
         this.id = id;
     }
+
     public String getUrl() {
         return url;
     }
@@ -34,7 +36,7 @@ public class Subscriber {
         return last_offset;
     }
 
-    public void setOffset(long offset) {
-        this.last_offset = offset;
+    public void setOffset(long last_offset) {
+        this.last_offset = last_offset;
     }
 }

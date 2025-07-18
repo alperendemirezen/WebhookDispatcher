@@ -9,7 +9,7 @@ public class AppConfig {
     private static String path = System.getProperty("user.dir") + File.separator + "KafkaServlet" + File.separator + "Configuration";
     private static String confPath = path + File.separator + "env.properties";
 
-    public static void  readConfig() throws Exception {
+    public static void readConfig() throws Exception {
 
         File confDirectory = new File(path);
         if (!confDirectory.exists()) {
@@ -46,7 +46,6 @@ public class AppConfig {
 
     }
 
-
     public static void saveConfig() {
         try (FileOutputStream out = new FileOutputStream(confPath)) {
             config.store(out, "Updated by AppConfig");
@@ -55,18 +54,19 @@ public class AppConfig {
         }
     }
 
-    public static long getConfigStartOffset(){
+    public static long getConfigStartOffset() {
         long offset;
 
-        try{
+        try {
             String strOffset = AppConfig.config.getProperty("start.offset");
-            offset = (strOffset!=null && !strOffset.isEmpty()) ? Long.parseLong(strOffset) : -1;
-        }catch (NumberFormatException e){
+            offset = (strOffset != null && !strOffset.isEmpty()) ? Long.parseLong(strOffset) : -1;
+        } catch (NumberFormatException e) {
             offset = -1;
         }
-        return  offset;
+        return offset;
 
     }
+
     public static long getMainLastOffset() {
         try {
             String strOffset = config.getProperty("main.last.offset");
@@ -75,11 +75,13 @@ public class AppConfig {
             return -1;
         }
     }
-    public static void setMainLastOffset(long offset){
-        config.setProperty("main.last.offset",String.valueOf(offset));
+
+    public static void setMainLastOffset(long offset) {
+        config.setProperty("main.last.offset", String.valueOf(offset));
     }
-    public static void setStartOffset(long offset){
-        config.setProperty("start.offset",String.valueOf(offset));
+
+    public static void setStartOffset(long offset) {
+        config.setProperty("start.offset", String.valueOf(offset));
     }
 
 

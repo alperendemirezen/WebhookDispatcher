@@ -17,7 +17,7 @@ public class MainWorker implements Runnable {
     public void run() {
         try {
             mode = AppConfig.getRetryMode();
-            System.out.println("Mode: " +  AppConfig.getRetryMode());
+            System.out.println("Mode: " + AppConfig.getRetryMode());
             System.out.println("[MainWorker] Started on thread: " + Thread.currentThread().getName());
             ThreadStatusManager.registerThread();
 
@@ -27,7 +27,7 @@ public class MainWorker implements Runnable {
             consumer.seekToBeginning(Collections.singletonList(partition));
             long beginningOffset = consumer.position(partition);
 
-            long startOffset = (AppConfig.getConfigStartOffset()!=-1) ? AppConfig.getConfigStartOffset() : AppConfig.getMainLastOffset();
+            long startOffset = (AppConfig.getConfigStartOffset() != -1) ? AppConfig.getConfigStartOffset() : AppConfig.getMainLastOffset();
             if (startOffset < beginningOffset) {
                 System.out.println("Start offset is too early. Starting from beginning offset: " + beginningOffset);
                 consumer.seek(partition, beginningOffset);
@@ -40,7 +40,7 @@ public class MainWorker implements Runnable {
                 ManagerDB.getUrlList(subscribers);
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
 
-                if (records.isEmpty()){
+                if (records.isEmpty()) {
                     if (records.isEmpty()) System.out.println("Records is empty");
                     PauseController.waitIfPaused();
                     continue;
@@ -49,7 +49,7 @@ public class MainWorker implements Runnable {
                 System.out.println("POLLED: " + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
-                    if(!Thread.currentThread().isInterrupted()) {
+                    if (!Thread.currentThread().isInterrupted()) {
                         System.out.println("MAIN : Offset:" + record.offset() + "| New message received: " + record.value());
                         forwardToWebhooks(record.value(), record.offset());
                         PauseController.waitIfPaused();
@@ -100,10 +100,10 @@ public class MainWorker implements Runnable {
 
                 } else {
                     System.err.println("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
-                    ManagerDB.insertToFailedMessages(subscriber.getUrl(),message,offset);
-                    System.out.println("Inserted to failed message with url: " + subscriber.getUrl()+ " and offset: " + offset);
+                    ManagerDB.insertToFailedMessages(subscriber.getUrl(), message, offset);
+                    System.out.println("Inserted to failed message with url: " + subscriber.getUrl() + " and offset: " + offset);
 
-                    if(mode.equals("unlimited")){
+                    if (mode.equals("unlimited")) {
                         ManagerDB.deleteFromSubscribers(subscriber.getUrl());
                     }
                 }

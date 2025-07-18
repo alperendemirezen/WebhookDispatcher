@@ -8,7 +8,6 @@ public class ManagerDB {
 
     private static final String DB_PATH = "jdbc:sqlite:C:\\Users\\Alperen Bey\\Desktop\\webhookDB\\webhok";
 
-    // MAIN WORKER PART START
     public static void getUrlList(List<Subscriber> list) {
         list.clear();
         try {
@@ -56,9 +55,7 @@ public class ManagerDB {
             e.printStackTrace();
         }
     }
-    // MAIN WORKER PART FINISHED
 
-    // RETRY WORKER PART START
     public static List<FailedMessage> getAllFailedMessages() {
         List<FailedMessage> list = new ArrayList<>();
         try {
@@ -173,11 +170,8 @@ public class ManagerDB {
             e.printStackTrace();
         }
     }
-    // PRIVATE WORKER PART FINISHED
 
-
-    // MERGE WORKER PART START
-    public static void insertToSubscribers(Subscriber subscriber){
+    public static void insertToSubscribers(Subscriber subscriber) {
         try {
             Class.forName("org.sqlite.JDBC");
             try (Connection conn = DriverManager.getConnection(DB_PATH);
@@ -232,8 +226,4 @@ public class ManagerDB {
 
         return privateSubscribers;
     }
-    // MERGE WORKER PART FINISHED
-
-
-
 }
