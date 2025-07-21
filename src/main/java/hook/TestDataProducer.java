@@ -24,7 +24,7 @@ public class TestDataProducer {
 
         String topic = "test-webhook-data";
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 3000; i++) {
             Map<String, Object> record = new HashMap<>();
             record.put("id", i);
             record.put("city", cities[i % cities.length]);

@@ -64,7 +64,6 @@ public class AppConfig {
             offset = -1;
         }
         return offset;
-
     }
 
     public static long getMainLastOffset() {
@@ -97,10 +96,10 @@ public class AppConfig {
     public static int getTimeoutMs() {
         try {
             String value = config.getProperty("timeoutMS");
-            return (value != null && !value.isEmpty()) ? Integer.parseInt(value) : 1000;
+            return (value != null && !value.isEmpty()) ? Integer.parseInt(value) : 100;
         } catch (NumberFormatException e) {
-            System.err.println("Invalid timeoutMS value in config. Using default 1000 ms.");
-            return 1000;
+            System.err.println("Invalid timeoutMS value in config. Using default 100 ms.");
+            return 100;
         }
     }
 
@@ -123,7 +122,7 @@ public class AppConfig {
                 return mode;
             }
         }
-        return "limited";
+        return "unlimited";
     }
 
     public static Properties getConfig() {
@@ -133,4 +132,20 @@ public class AppConfig {
     public static void setConfig(Properties config) {
         AppConfig.config = config;
     }
+
+    public static int getMergeThreadIntervalMinutes() {
+        String intervalStr = config.getProperty("merge.thread.interval.minutes");
+        if (intervalStr != null) {
+            try {
+                int interval = Integer.parseInt(intervalStr.trim());
+                if (interval > 0) {
+                    return interval;
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        return 60;
+    }
+
 }

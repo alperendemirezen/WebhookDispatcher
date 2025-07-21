@@ -10,8 +10,8 @@ public class HourlyScheduler {
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     public static void startScheduler() {
-        long initialDelay = 10000; //getDelayUntilNextHour();
-        long period = 3000; // TimeUnit.HOURS.toMillis(1);
+        long initialDelay = 5000; //getDelayUntilNextHour();
+        long period =  TimeUnit.MINUTES.toMillis(AppConfig.getMergeThreadIntervalMinutes());
 
         scheduler.scheduleAtFixedRate(new MergeWorker(), initialDelay, period, TimeUnit.MILLISECONDS);
     }

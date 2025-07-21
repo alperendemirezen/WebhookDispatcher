@@ -100,8 +100,10 @@ public class MainWorker implements Runnable {
 
                 } else {
                     System.err.println("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
-                    ManagerDB.insertToFailedMessages(subscriber.getUrl(), message, offset);
-                    System.out.println("Inserted to failed message with url: " + subscriber.getUrl() + " and offset: " + offset);
+                    if(AppConfig.getRetryCount() != 0 || !mode.equals("limited")){
+                        ManagerDB.insertToFailedMessages(subscriber.getUrl(), message, offset);
+                        System.out.println("Inserted to failed message with url: " + subscriber.getUrl() + " and offset: " + offset);
+                    }
 
                     if (mode.equals("unlimited")) {
                         ManagerDB.deleteFromSubscribers(subscriber.getUrl());

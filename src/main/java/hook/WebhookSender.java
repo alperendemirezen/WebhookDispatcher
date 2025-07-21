@@ -14,9 +14,9 @@ public class WebhookSender {
 
         try {
             String configTimeout = String.valueOf(AppConfig.getTimeoutMs());
-            timeout = (configTimeout != null && !configTimeout.isEmpty()) ? Integer.parseInt(configTimeout) : 1000;
+            timeout = (configTimeout != null && !configTimeout.isEmpty()) ? Integer.parseInt(configTimeout) : 100;
         } catch (NumberFormatException e) {
-            timeout = 1000;
+            timeout = 100;
         }
 
         RequestConfig requestConfig = RequestConfig.custom()

@@ -53,7 +53,7 @@ public class PrivateWorker implements Runnable {
                     if (records.isEmpty()) System.out.println("Records is empty");
 
                     consumer.seekToBeginning(Collections.singletonList(partition));
-                    beginningOffset = consumer.position(partition);   // BURAYI MUTLAKA SOR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    beginningOffset = consumer.position(partition);
 
                     if (subscriber.getOffset() + 1 >= beginningOffset) {
                         consumer.seek(partition, subscriber.getOffset() + 1);
