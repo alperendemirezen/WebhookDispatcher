@@ -7,15 +7,18 @@ public class FailedMessage {
     private long offset;
     private int retryCount;
     private String lastAttempt;
+    private String topic;
+
 
     // Constructor
-    public FailedMessage(int id, String url, String message, long offset, int retryCount, String lastAttempt) {
+    public FailedMessage(int id, String url, String message, long offset, int retryCount, String lastAttempt, String topic) {
         this.id = id;
         this.url = url;
         this.message = message;
         this.offset = offset;
         this.retryCount = retryCount;
         this.lastAttempt = lastAttempt;
+        this.topic = topic;
     }
 
 
@@ -49,5 +52,13 @@ public class FailedMessage {
 
     public int getRetryCount() {
         return retryCount;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 }

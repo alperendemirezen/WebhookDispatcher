@@ -11,7 +11,7 @@ public class HourlyScheduler {
 
     public static void startScheduler() {
         long initialDelay = 5000; //getDelayUntilNextHour();
-        long period =  TimeUnit.MINUTES.toMillis(AppConfig.getMergeThreadIntervalMinutes());
+        long period = AppConfig.getMergeThreadIntervalMs();
 
         scheduler.scheduleAtFixedRate(new MergeWorker(), initialDelay, period, TimeUnit.MILLISECONDS);
     }

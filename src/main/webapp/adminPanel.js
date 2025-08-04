@@ -97,14 +97,18 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
 
             const url = document.getElementById("url").value;
+
+            const topic = document.getElementById("topic").value;
             const offset = document.getElementById("offset").value;
+
+
 
             fetch("AddSubscriberServlet", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
-                body: "url=" + encodeURIComponent(url) + "&offset=" + encodeURIComponent(offset)
+                body: "url=" + encodeURIComponent(url) + "&topic=" + encodeURIComponent(topic) + "&offset=" + encodeURIComponent(offset)
             })
             .then(response => {
                 if (response.ok) {
@@ -143,7 +147,7 @@ function makeRowsSelectable(table) {
         rows[i].onclick = function () {
             const isAlreadySelected = this.classList.contains("selected");
 
-            // Seçimi kaldır
+
             for (let j = 1; j < rows.length; j++) {
                 rows[j].classList.remove("selected");
             }
@@ -155,7 +159,7 @@ function makeRowsSelectable(table) {
                 const headers = table.getElementsByTagName("th");
                 selectedRowData = {};
                 for (let k = 0; k < cells.length; k++) {
-                    const key = headers[k].innerText.trim();  // boşlukları temizle
+                    const key = headers[k].innerText.trim();
                     selectedRowData[key] = cells[k].innerText;
                 }
                 console.log("Selected row data:", selectedRowData);

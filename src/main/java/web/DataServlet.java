@@ -67,7 +67,7 @@ public class DataServlet extends HttpServlet {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                list.add(new Subscriber(rs.getInt("id"), rs.getString("url"), rs.getLong("last_offset")));
+                list.add(new Subscriber(rs.getInt("id"), rs.getString("url"), rs.getLong("last_offset"), rs.getString("topic")));
             }
 
         } catch (Exception e) {
@@ -85,7 +85,7 @@ public class DataServlet extends HttpServlet {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                list.add(new PrivateSubscriber(rs.getInt("id"), rs.getString("url"), rs.getLong("last_offset")));
+                list.add(new PrivateSubscriber(rs.getInt("id"), rs.getString("url"), rs.getLong("last_offset"), rs.getString("topic")));
             }
 
         } catch (Exception e) {
@@ -109,7 +109,8 @@ public class DataServlet extends HttpServlet {
                         rs.getLong("offset"),
                         rs.getString("message"),
                         rs.getInt("retry_count"),
-                        rs.getString("last_attempt")
+                        rs.getString("last_attempt"),
+                        rs.getString("topic")
                 );
                 messages.add(msg);
             }

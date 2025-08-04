@@ -5,6 +5,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 
+import log.Log4jUtility;
+
 import java.time.Duration;
 import java.util.Collections;
 
@@ -17,22 +19,19 @@ public class PrivateWorker implements Runnable {
 
     private volatile boolean running = true;
 
-
     public PrivateWorker(Subscriber subscriber) {
         this.subscriber = subscriber;
     }
 
     @Override
     public void run() {
-        RetryWorker.privateWorkers.add(this);
-
 
         try {
-            System.out.println("[PrivateWorker] Started on thread: " + Thread.currentThread().getName());
+            Log4jUtility.getLogger().debug("Started on thread: " + Thread.currentThread().getName());
             ThreadStatusManager.registerThread();
 
             consumer = new KafkaConsumer<>(KafkaProperties.getKafkaProperties());
-            TopicPartition partition = new TopicPartition(KafkaProperties.topic, 0);
+            TopicPartition partition = new TopicPartition(subscriber.getTopic(), 0);
             consumer.assign(Collections.singletonList(partition));
 
             consumer.seekToBeginning(Collections.singletonList(partition));
@@ -44,13 +43,12 @@ public class PrivateWorker implements Runnable {
                 consumer.seek(partition, beginningOffset);
             }
 
-
             while (running) {
 
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
 
                 if (records.isEmpty()) {
-                    if (records.isEmpty()) System.out.println("Records is empty");
+                    if (records.isEmpty()) Log4jUtility.getLogger().debug("Records is empty");
 
                     consumer.seekToBeginning(Collections.singletonList(partition));
                     beginningOffset = consumer.position(partition);
@@ -63,11 +61,11 @@ public class PrivateWorker implements Runnable {
                     PauseController.waitIfPaused();
                     continue;
                 }
-                System.out.println("POLLED PRIVATE" + records.count());
+                Log4jUtility.getLogger().debug("POLLED PRIVATE" + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
                     if (!Thread.currentThread().isInterrupted()) {
-                        System.out.println("PRIVATE: Offset:" + record.offset() + "| New message received: " + record.value());
+                        Log4jUtility.getLogger().debug("PRIVATE: Offset:" + record.offset() + "| New message received: " + record.value());
                         forwardToWebhooks(record.value(), record.offset());
                         PauseController.waitIfPaused();
                         if (running == false) break;
@@ -87,16 +85,16 @@ public class PrivateWorker implements Runnable {
     private void forwardToWebhooks(String message, long offset) {
         try {
 
-            int statusCode = -1;
+            int statusCode;
 
             statusCode = WebhookSender.send(subscriber.getUrl(), message, offset);
             if (statusCode == 200) {
-                System.out.println("SUCCESS PRIVATE : " + subscriber.getUrl() + " (status: " + statusCode + ")");
+                Log4jUtility.getLogger().debug("SUCCESS PRIVATE : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                 ManagerDB.privateUpdateOffset(subscriber.getUrl(), offset);
                 subscriber.setOffset(offset);
             } else {
-                System.out.println("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
-                ManagerDB.insertToFailedMessages(subscriber.getUrl(), message, offset);
+                Log4jUtility.getLogger().error("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
+                ManagerDB.insertToFailedMessages(subscriber.getUrl(), message, offset, subscriber.getTopic());
                 running = false;
             }
 

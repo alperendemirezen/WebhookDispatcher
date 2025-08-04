@@ -5,15 +5,25 @@ public class Subscriber {
     private int id;
     private String url;
     private long last_offset;
+    private String topic;
 
     public Subscriber() {
     }
 
 
-    public Subscriber(int id, String url, long last_offset) {
+    public Subscriber(int id, String url, long last_offset, String topic) {
         this.id = id;
         this.url = url;
         this.last_offset = last_offset;
+        this.topic = topic;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 
     public int getId() {
@@ -39,4 +49,6 @@ public class Subscriber {
     public void setOffset(long last_offset) {
         this.last_offset = last_offset;
     }
+
+
 }

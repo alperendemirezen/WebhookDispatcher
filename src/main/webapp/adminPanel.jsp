@@ -94,6 +94,10 @@
                        placeholder="http://localhost:8080/KafkaWebHook">
               </div>
               <div class="mb-3">
+                <label for="topic" class="form-label">Topic</label>
+                <input type="text" class="form-control" id="topic" name="topic" required placeholder="kafka-webhook">
+              </div>
+              <div class="mb-3">
                 <label for="offset" class="form-label">Last Offset</label>
                 <input type="number" class="form-control" id="offset" name="offset" required
                        placeholder="default: 0">

@@ -1,4 +1,4 @@
-package hook;
+package KafkaTestProducer;
 
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
@@ -11,7 +11,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
-public class TestServer {
+public class server9095 {
 
     public static ArrayList<String> list = new ArrayList<String>();
 

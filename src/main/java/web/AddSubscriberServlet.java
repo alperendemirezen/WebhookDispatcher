@@ -13,6 +13,7 @@ public class AddSubscriberServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String url = request.getParameter("url");
+        String topic = request.getParameter("topic");
         String offsetStr = request.getParameter("offset");
 
         try {
@@ -21,6 +22,7 @@ public class AddSubscriberServlet extends HttpServlet {
             Subscriber subscriber = new Subscriber();
             subscriber.setUrl(url);
             subscriber.setOffset(offset);
+            subscriber.setTopic(topic);
 
             insertToSubscribers(subscriber);
 
@@ -38,10 +40,11 @@ public class AddSubscriberServlet extends HttpServlet {
             Class.forName("org.sqlite.JDBC");
             try (Connection conn = DriverManager.getConnection("jdbc:sqlite:C:\\Users\\Alperen Bey\\Desktop\\webhookDB\\webhok");
                  PreparedStatement stmt = conn.prepareStatement(
-                         "INSERT INTO subscribers (url, last_offset) VALUES (?, ?)")) {
+                         "INSERT INTO subscribers (url, last_offset, topic) VALUES (?, ?, ?)")) {
 
                 stmt.setString(1, subscriber.getUrl());
                 stmt.setLong(2, subscriber.getOffset());
+                stmt.setString(3, subscriber.getTopic());
                 stmt.executeUpdate();
             }
         } catch (Exception e) {

@@ -2,6 +2,7 @@ package hook;
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
+import log.Log4jUtility;
 
 import java.time.Duration;
 import java.util.*;
@@ -11,25 +12,31 @@ public class MainWorker implements Runnable {
     private KafkaConsumer<String, String> consumer;
     private List<Subscriber> subscribers = new ArrayList<>();
     private String mode;
+    private long lastOffset;
+    private String topic;
 
+    public MainWorker(String topic) {
+        this.topic = topic;
+    }
 
     @Override
     public void run() {
         try {
+
             mode = AppConfig.getRetryMode();
-            System.out.println("Mode: " + AppConfig.getRetryMode());
-            System.out.println("[MainWorker] Started on thread: " + Thread.currentThread().getName());
+            Log4jUtility.getLogger().debug("Mode: " + AppConfig.getRetryMode());
+            Log4jUtility.getLogger().debug("Started on thread: " + Thread.currentThread().getName());
             ThreadStatusManager.registerThread();
 
             consumer = new KafkaConsumer<>(KafkaProperties.getKafkaProperties());
-            TopicPartition partition = new TopicPartition(KafkaProperties.topic, 0);
+            TopicPartition partition = new TopicPartition(topic, 0);
             consumer.assign(Collections.singletonList(partition));
             consumer.seekToBeginning(Collections.singletonList(partition));
             long beginningOffset = consumer.position(partition);
 
-            long startOffset = (AppConfig.getConfigStartOffset() != -1) ? AppConfig.getConfigStartOffset() : AppConfig.getMainLastOffset();
+            long startOffset = (OffsetConfig.getMainOffset(topic) != -1) ? OffsetConfig.getMainOffset(topic) : lastOffset;
             if (startOffset < beginningOffset) {
-                System.out.println("Start offset is too early. Starting from beginning offset: " + beginningOffset);
+                Log4jUtility.getLogger().debug("Start offset is too early. Starting from beginning offset: " + beginningOffset);
                 consumer.seek(partition, beginningOffset);
             } else {
                 consumer.seek(partition, startOffset);
@@ -37,30 +44,31 @@ public class MainWorker implements Runnable {
 
             while (true) {
 
-                ManagerDB.getUrlList(subscribers);
+                ManagerDB.getSubscribers(subscribers, topic);
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(5000));
 
                 if (records.isEmpty()) {
-                    if (records.isEmpty()) System.out.println("Records is empty");
+                    if (records.isEmpty()) Log4jUtility.getLogger().debug("Record is empty");
                     PauseController.waitIfPaused();
                     continue;
                 }
 
-                System.out.println("POLLED: " + records.count());
+                Log4jUtility.getLogger().debug("POLLED: " + records.count());
 
                 for (ConsumerRecord<String, String> record : records) {
                     if (!Thread.currentThread().isInterrupted()) {
-                        System.out.println("MAIN : Offset:" + record.offset() + "| New message received: " + record.value());
+                        Log4jUtility.getLogger().debug("MAIN : Offset:" + record.offset() + "| New message received: " + record.value());
                         forwardToWebhooks(record.value(), record.offset());
                         PauseController.waitIfPaused();
                         if (mode.equals("unlimited")) {
-                            ManagerDB.getUrlList(subscribers);
+                            ManagerDB.getSubscribers(subscribers, topic); //SEDAT ABIYE SOR
                         }
                     }
                 }
                 consumer.commitSync();
             }
         } catch (Exception e) {
+            Log4jUtility.getLogger().error("Error in MainWorker: " + e.getMessage(), e);
             e.printStackTrace();
         } finally {
             if (consumer != null) consumer.close();
@@ -72,7 +80,7 @@ public class MainWorker implements Runnable {
         try {
             for (Subscriber subscriber : subscribers) {
                 if (offset <= subscriber.getOffset()) {
-                    System.out.println(" Skipped: " + subscriber.getUrl() + " (offset=" + offset + " <= last_offset=" + subscriber.getOffset() + ")");
+                    Log4jUtility.getLogger().debug(" Skipped: " + subscriber.getUrl() + " (offset=" + offset + " <= last_offset=" + subscriber.getOffset() + ")");
                     continue;
                 }
 
@@ -81,7 +89,6 @@ public class MainWorker implements Runnable {
                 int statusCode = -1;
                 int attemptsLimit = (mode.equals("unlimited")) ? 3 : 1;
 
-
                 while (!sent && attempts < attemptsLimit) {
                     statusCode = WebhookSender.send(subscriber.getUrl(), message, offset);
                     if (statusCode == 200) {
@@ -89,34 +96,43 @@ public class MainWorker implements Runnable {
                     } else {
                         attempts++;
                         if (attempts < attemptsLimit) {
-                            System.out.println("Retrying (" + attempts + "): " + subscriber.getUrl());
+                            Log4jUtility.getLogger().debug("Retrying (" + attempts + "): " + subscriber.getUrl());
                         }
                     }
                 }
 
                 if (sent) {
-                    System.out.println("SUCCESS : " + subscriber.getUrl() + " (status: " + statusCode + ")");
+                    Log4jUtility.getLogger().debug("SUCCESS : " + subscriber.getUrl() + " (status: " + statusCode + ")");
                     ManagerDB.updateOffset(subscriber.getUrl(), offset);
 
                 } else {
-                    System.err.println("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
-                    if(AppConfig.getRetryCount() != 0 || !mode.equals("limited")){
-                        ManagerDB.insertToFailedMessages(subscriber.getUrl(), message, offset);
-                        System.out.println("Inserted to failed message with url: " + subscriber.getUrl() + " and offset: " + offset);
+                    Log4jUtility.getLogger().error("FAILED : " + subscriber.getUrl() + " (status: " + statusCode + ")");
+                    if (AppConfig.getRetryCount() != 0 || !mode.equals("limited")) {
+                        ManagerDB.insertToFailedMessages(subscriber.getUrl(), message, offset, topic);
+                        Log4jUtility.getLogger().error("Inserted to failed message with url: " + subscriber.getUrl() + " and offset: " + offset);
+
                     }
 
                     if (mode.equals("unlimited")) {
-                        ManagerDB.deleteFromSubscribers(subscriber.getUrl());
+                        ManagerDB.deleteFromSubscribers(subscriber.getUrl(), topic);
                     }
                 }
             }
 
-            AppConfig.setMainLastOffset(offset);
-            AppConfig.setStartOffset(offset);
-            AppConfig.saveConfig();
+            lastOffset = offset;
+
+            OffsetConfig.updateMainOffset(topic, lastOffset);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public long getLastOffset() {
+        return lastOffset;
+    }
+
+    public String getTopic() {
+        return topic;
     }
 }
